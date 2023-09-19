@@ -23,6 +23,14 @@
 #include <string>
 
 //written by the compiler
+struct Base;
+struct Derived;
+void vf(Base*);
+void nov(Base*);
+void vf(Derived*);
+void nov(Derived*);
+void nf(Derived*);
+
 
 struct TI {
     std::string class_name;
@@ -30,34 +38,26 @@ struct TI {
 
 struct BaseVtbl {
     TI* type_info;
-    void (*vf)();
-    void (*nov)();
+    void (*vf)(Base*);
+    void (*nov)(Base*);
 };
-
-void vf() {
-    std::cout << "Base::vf" << std::endl;
-}
-
-void vf_D() {
-    std::cout << "Derived::vf" << std::endl;
-}
-
-void nov() {
-    std::cout << "Base::nov" << std::endl;
-}
-
-void nf() {
-    std::cout << "Derived::nov" << std::endl;
-}
 
 struct Base {
     int m_x;
     BaseVtbl* vptr;
 };
 
+void vf(Base* ob){
+  std::cout << ob->vptr->type_info->class_name << "::vf" << std::endl;
+}
+
+void nov(Base* ob){
+  std::cout << ob->vptr->type_info->class_name << "::nov" << std::endl; 
+}
+
 void ctor(Base* ob) {
     TI* ti = new TI;
-    ti->class_name = typeid(*ob).name();;
+    ti->class_name = typeid(*ob).name();
     ob->vptr->type_info = ti;
     ob->vptr->vf = &vf;
     ob->vptr->nov = &nov;
@@ -65,39 +65,57 @@ void ctor(Base* ob) {
 
 struct DerivedVtbl{
   TI* type_info;
-  void (*vf)();
-  void (*nov)();
-  void (*nf)();
+  void (*vf)(Derived*);
+  void (*nov)(Derived*);
+  void (*nf)(Derived*);
 };
+
+
 
 struct Derived {
     int m_y;
     DerivedVtbl* vptr;
 };
 
+void vf(Derived* ob) {
+  std::cout << ob->vptr->type_info->class_name << "::vf" << std::endl;
+}
+
+void nov(Derived* ob) {
+ std::cout << ob->vptr->type_info->class_name << "::nov" << std::endl;
+}
+
+void nf(Derived* ob) { 
+    std::cout << ob->vptr->type_info->class_name << "::nf" << std::endl; \
+}
+
 void ctor(Derived* ob) {
     TI* ti = new TI;
-    ti->class_name = "Derived";
+    ti->class_name = typeid(*ob).name();
     ob->vptr->type_info = ti;
-    ob->vptr->vf = &vf_D;
-    ob->vptr->nov = &nf;
+    ob->vptr->vf = &vf;
+    ob->vptr->nov = &nov;
     ob->vptr->nf = &nf;
 }
 
 int main() {
      Base baseOb;
+     //compile generation
      BaseVtbl baseVtbl;
      baseOb.vptr = &baseVtbl;
      ctor(&baseOb);
-     baseOb.vptr->vf();
+     baseOb.vptr->vf(&baseOb);
 
      Derived derivedOb;
+     //compile generation
      DerivedVtbl derivedVtbl;
      derivedOb.vptr = &derivedVtbl;
      ctor(&derivedOb);
-     derivedOb.vptr->vf();
+     derivedOb.vptr->vf(&derivedOb);
 
     return 0;
 }
+
+
 
 
